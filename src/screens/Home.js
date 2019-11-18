@@ -5,6 +5,8 @@ import { data, filters } from '../Data'
 import Icon from 'react-native-vector-icons/Ionicons'
 import FontIcon from 'react-native-vector-icons/FontAwesome5'
 import Modal from 'react-native-modal'
+import { contains } from '../functions/Search'
+import _ from 'lodash'
 // import { Container } from './styles';
 
 const { height, width } = Dimensions.get('window')
@@ -14,27 +16,55 @@ export default class screens extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            latitude: 0,
-            longitude: 0,
-            destLat: -8.1105568,
-            destLong: -34.9369935,
-            error: null,
-            destiny: {
-                latitude: -8.128255,
-                longitude: -34.949179
-            },
-            data: data,
+            fullData: [],
+            data: [],
+            query: '',
             filters: filters,
             isModalVisible: false,
             wordsSelecteds: [],
-            changeState: true
+            changeState: true,
         }
     }
 
-    handleModal = () => {
-        this.setState({ isModalVisible: !this.state.isModalVisible })
+    componentDidMount() {
+        const fullData = data
+        this.setState({
+            fullData,
+            data: fullData
+        })
     }
 
+    handleModal = () => {
+        this.setState({
+            isModalVisible: !this.state.isModalVisible
+        })
+    }
+
+    filter = () => {
+        this.handleModal()
+        var words = this.state.wordsSelecteds
+        //Caso sejam selecionadas varias palavras
+        if (this.state.wordsSelecteds.length > 1) {
+            var data = []
+            for(var i in words) {
+                var nameSelected = words[i]
+                x = _.filter(this.state.fullData, fullData => {
+                    return (contains(fullData, nameSelected))
+                })
+                data.push(...x)
+              }
+            this.setState({data})
+        }
+        //Caso seja selecionado apenas 1 palavra
+        else {
+            const formatQuery = this.state.wordsSelecteds.toString()
+            const data = _.filter(this.state.fullData, fullData => {
+                return contains(fullData, formatQuery)
+            })
+            console.log(data)
+            this.setState({ query: formatQuery, data })
+        }
+    }
 
     handleSelectWord = (word) => {
         console.log('ENTROU NA FUNÇÃO')
@@ -46,13 +76,9 @@ export default class screens extends Component {
             :
             this.state.wordsSelecteds.push(word)
         this.setState({ changeState: !this.state.changeState })
-        console.log(this.state.wordsSelecteds)
     }
 
-    filter = () => {
-        this.handleModal()
-        console.log(this.state.wordsSelecteds)
-    }
+
 
     render() {
         return (
@@ -156,7 +182,7 @@ export default class screens extends Component {
                 <FlatList
                     data={this.state.data}
                     showsVerticalScrollIndicator={false}
-                    keyExtractor={item => item.id}
+                    keyExtractor={item => item.id.toString()}
                     renderItem={({ item }) =>
                         <View style={{ flexDirection: 'row', width: width - 30, height: 80, }}>
                             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -170,7 +196,7 @@ export default class screens extends Component {
                                     {item.name}
                                 </Text>
                                 <Text>
-                                    {item.adress}
+                                    {item.tipo}
                                 </Text>
                             </View>
                         </View>
